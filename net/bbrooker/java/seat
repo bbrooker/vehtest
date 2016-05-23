@@ -1,0 +1,161 @@
+package net.bbrooker.minezroleplay.data.veh.util;
+
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.DamageSource;
+import net.minecraft.world.World;
+
+public class VehSeat extends Entity{
+	
+
+	public EntityLandVehicle instancemod;
+	public boolean shouldRiderSit = true;
+	public boolean forceRotation = true;
+
+	public VehSeat(World p_i1582_1_) {
+		super(p_i1582_1_);
+		setSize(0.0F, 0.0F);
+	}
+	
+	public VehSeat(World par1World, EntityLandVehicle veh, double par2, double par4, double par6)
+	{
+	  this(par1World);
+	  setPosition(par2, par4, par6);
+	  this.instancemod = veh;
+	}
+	
+	@Override
+	protected void entityInit() 
+	{
+		this.dataWatcher.addObject(25, new Integer(0));
+	}
+	
+	public boolean attackEntityFrom(DamageSource par1DamageSource, float par2)
+	{
+		return this.instancemod == null ? false : isEntityInvulnerable() ? false : this.instancemod.attackEntityFrom(par1DamageSource, par2);
+	}
+	
+	public double getMountedYOffset()
+	{
+		return this.height;
+	}
+	
+	public void updateRiderPosition()
+	{
+		if (this.riddenByEntity != null)
+		{
+			this.riddenByEntity.setPosition(posX, posY + riddenByEntity.getYOffset(), posZ);
+		    
+			if ((forceRotation) && ((riddenByEntity instanceof EntityLivingBase)))
+		    {
+		    	EntityLivingBase entity = (EntityLivingBase)this.riddenByEntity;
+		    	entity.renderYawOffset = this.rotationYaw;
+		    	
+		    	if ((this.instancemod != null) && ((this.instancemod instanceof EntityLandVehicle))) 
+		    	{
+		    		if (entity.rotationYaw > this.instancemod.rotationYaw + 100.0F) 
+		    		{
+		    			entity.rotationYaw = (this.instancemod.rotationYaw + 100.0F);
+		    		} 
+		    		else if (entity.rotationYaw < this.instancemod.rotationYaw + -80.0F) 
+		    		{
+		    			entity.rotationYaw = (this.instancemod.rotationYaw + -80.0F);
+		    		}
+		    	}
+		    }
+		}
+	}
+	
+	public boolean func_130002_c(EntityPlayer player)
+	{
+		if ((this.riddenByEntity != null) && ((this.riddenByEntity instanceof EntityPlayer)) && (this.riddenByEntity != player)) 
+		{
+		return true;
+		}
+		if(worldObj.isRemote)
+		{
+			player.mountEntity(this);
+		    System.out.println("0202");
+		}
+		return true;
+	}
+	  
+	protected boolean canTriggerWalking()
+	{
+		return false;
+	}
+	
+	@Override
+	public AxisAlignedBB getCollisionBox(Entity par1Entity)
+	{
+		return null;
+	}
+	
+	public AxisAlignedBB getCollisionBoundingBox()
+	{
+		return null;
+	}
+	
+	@Override
+	public boolean canBePushed()
+	{
+		return false;
+	}
+
+	  
+	public boolean canBeCollidedWith()
+	{
+	    return false;
+	}
+	  
+	public boolean shouldRiderSit()
+	{
+	    return this.shouldRiderSit;
+	}
+	
+	public void onUpdate()
+	{
+		super.onUpdate();
+	    if (!this.worldObj.isRemote)
+	    {
+	        if ((this.instancemod != null) && (this.dataWatcher.getWatchableObjectInt(25) <= 0)) 
+	        {
+	        this.dataWatcher.updateObject(25, Integer.valueOf(this.instancemod.getEntityId()));
+	        }
+	    }
+	    else if (this.instancemod == null)
+	    {
+	        int id = this.dataWatcher.getWatchableObjectInt(25);
+	        if (id > 0) {
+	        this.instancemod = ((EntityLandVehicle)this.worldObj.getEntityByID(id));
+	        }
+	    }
+	    if (!this.worldObj.isRemote)
+	    {
+	    	if ((this.riddenByEntity != null) && (this.riddenByEntity.isDead))
+	    	{
+	    		riddenByEntity = null;
+	    	}
+	        if ((this.instancemod == null) || (this.instancemod.isDead)) 
+	        {
+	        	setDead();
+	        }
+	    }
+	}
+
+	@Override
+	protected void readEntityFromNBT(NBTTagCompound p_70037_1_) 
+	{
+
+	}
+
+	@Override
+	protected void writeEntityToNBT(NBTTagCompound p_70014_1_) 
+	{
+		
+	}
+
+}
